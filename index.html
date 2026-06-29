@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EWS — Early Warning System</title>
+<style>
+  :root{
+    --ink:#1B2A41; --ink-soft:#46586F; --paper:#F7F8FA; --card:#FFFFFF;
+    --line:#E3E8EF; --accent:#14635A; --accent-soft:#E3F0EE;
+    --green:#1F8A4C; --green-bg:#E4F4EA; --amber:#B26B00; --amber-bg:#FCF1DD;
+    --red:#C2362B; --red-bg:#FBE7E5; --muted:#8794A5;
+    --radius:10px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--paper); color:var(--ink); font-size:14px; line-height:1.5;}
+  header{background:var(--ink); color:#fff; padding:14px 22px; display:flex; align-items:center; gap:16px; flex-wrap:wrap;}
+  header h1{font-family:Georgia,"Times New Roman",serif; font-size:19px; font-weight:600; letter-spacing:.2px;}
+  header .sub{font-size:12px; color:#AEBBCD;}
+  nav{display:flex; gap:4px; margin-left:auto; flex-wrap:wrap;}
+  nav button{background:transparent; border:1px solid transparent; color:#C7D2E0; padding:7px 14px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:600;}
+  nav button:hover{color:#fff;}
+  nav button.active{background:#fff; color:var(--ink);}
+  nav button:focus-visible{outline:2px solid #fff; outline-offset:2px;}
+  main{max-width:1180px; margin:0 auto; padding:22px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-bottom:16px;}
+  h2{font-family:Georgia,serif; font-size:17px; margin-bottom:4px;}
+  .hint{color:var(--muted); font-size:12.5px; margin-bottom:12px;}
+  label{display:block; font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:4px; text-transform:uppercase; letter-spacing:.4px;}
+  input,select,textarea{width:100%; padding:8px 10px; border:1px solid var(--line); border-radius:7px; font:inherit; background:#fff; color:var(--ink);}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent);}
+  textarea{resize:vertical; min-height:54px;}
+  .row{display:flex; gap:12px; flex-wrap:wrap;}
+  .row>div{flex:1; min-width:160px;}
+  .btn{background:var(--accent); color:#fff; border:none; padding:9px 18px; border-radius:8px; font-weight:700; font-size:13px; cursor:pointer;}
+  .btn:hover{filter:brightness(1.08);}
+  .btn.ghost{background:#fff; color:var(--accent); border:1px solid var(--accent);}
+  .btn.small{padding:5px 12px; font-size:12px;}
+  .btn.danger{background:#fff; color:var(--red); border:1px solid var(--red);}
+  .btn:focus-visible{outline:2px solid var(--ink); outline-offset:2px;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{background:var(--ink); color:#fff; padding:8px 9px; text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap;}
+  td{padding:8px 9px; border-bottom:1px solid var(--line); vertical-align:middle;}
+  tr:hover td{background:#FBFCFE;}
+  .chip{display:inline-block; min-width:34px; text-align:center; padding:3px 8px; border-radius:20px; font-size:11px; font-weight:700;}
+  .c-green{background:var(--green-bg); color:var(--green);}
+  .c-amber{background:var(--amber-bg); color:var(--amber);}
+  .c-red{background:var(--red-bg); color:var(--red);}
+  .c-none{background:#EEF1F5; color:var(--muted);}
+  .weekbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:16px;}
+  .weekbar input[type=date]{width:auto;}
+  .summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px;}
+  .stat{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px;}
+  .stat .v{font-family:Georgia,serif; font-size:26px; font-weight:700;}
+  .stat .l{font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); font-weight:700;}
+  .stat.alert .v{color:var(--red);}
+  .stat.ok .v{color:var(--green);}
+  /* check-in script cards */
+  .qcard{border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:8px; padding:14px 16px; margin-bottom:12px; background:#fff;}
+  .qcard .ask{font-family:Georgia,serif; font-size:15px; font-style:italic; color:var(--ink); margin-bottom:10px;}
+  .qcard .ask::before{content:"\u201c";} .qcard .ask::after{content:"\u201d";}
+  .seg{display:flex; gap:6px; flex-wrap:wrap;}
+  .seg button{flex:1; min-width:90px; padding:8px 6px; border:1px solid var(--line); background:#fff; border-radius:7px; cursor:pointer; font-weight:700; font-size:12.5px; color:var(--ink-soft);}
+  .seg button:focus-visible{outline:2px solid var(--accent);}
+  .seg button.sel-green{background:var(--green-bg); border-color:var(--green); color:var(--green);}
+  .seg button.sel-amber{background:var(--amber-bg); border-color:var(--amber); color:var(--amber);}
+  .seg button.sel-red{background:var(--red-bg); border-color:var(--red); color:var(--red);}
+  .emp-list{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px;}
+  .emp-pill{padding:7px 13px; border-radius:20px; border:1px solid var(--line); background:#fff; cursor:pointer; font-size:12.5px; font-weight:600; color:var(--ink-soft);}
+  .emp-pill.done{background:var(--green-bg); border-color:var(--green); color:var(--green);}
+  .emp-pill.current{background:var(--ink); border-color:var(--ink); color:#fff;}
+  .drop{border:2px dashed var(--line); border-radius:var(--radius); padding:34px; text-align:center; color:var(--muted); background:#fff; cursor:pointer;}
+  .drop.over{border-color:var(--accent); background:var(--accent-soft); color:var(--accent);}
+  .toast{position:fixed; bottom:18px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:10px 20px; border-radius:8px; font-size:13px; opacity:0; transition:opacity .25s; pointer-events:none; z-index:50;}
+  .toast.show{opacity:1;}
+  .empty{padding:30px; text-align:center; color:var(--muted);}
+  .tag{font-size:10.5px; background:#EEF1F5; color:var(--ink-soft); padding:2px 7px; border-radius:4px; font-weight:700;}
+  .printonly{display:none;} #ciDetailPrint{display:none;} @media print{#ciDetailPrint{display:block !important;}}
+  .notewarn{background:var(--amber-bg); border:1px solid #EAD3A8; color:var(--amber); padding:9px 12px; border-radius:8px; font-size:12.5px; margin-bottom:12px;}
+  @media print{
+    body{background:#fff;}
+    header nav, .weekbar .btn, .noprint{display:none !important;}
+    main{max-width:none; padding:0;}
+    .card{border:none; padding:6px 0;}
+    section:not(#tab-dashboard){display:none !important;}
+    .printonly{display:block; font-size:11px; color:#666; margin-top:10px;}
+    th{background:#1B2A41 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .chip,.stat{-webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>EWS — Early Warning System</h1>
+    <div class="sub">Team Activity &amp; Weekly Check-in Tracker · Management Reporting</div>
+  </div>
+  <nav>
+    <button data-tab="dashboard" class="active">Dashboard</button>
+    <button data-tab="checkin">Tuesday Check-in</button>
+    <button data-tab="history">Weekly History</button>
+    <button data-tab="team">Team & Settings</button>
+  </nav>
+</header>
+<main>
+
+<!-- ============ DASHBOARD ============ -->
+<section id="tab-dashboard">
+  <div class="weekbar">
+    <label style="margin:0;">Reporting week</label>
+    <select id="dashWeek" style="width:auto; min-width:220px; font-weight:700;"></select>
+    <button class="btn ghost small noprint" id="btnPrint">Export Report (PDF)</button>
+  </div>
+  <div class="summary" id="dashStats"></div>
+  <div class="card" style="overflow-x:auto;">
+    <h2>Weekly Team Performance &amp; Health Report</h2>
+    <p id="reportPeriod" style="font-size:12.5px; font-weight:700; color:var(--accent); margin-bottom:2px;"></p>
+    <p class="hint">Client health & morale from Tuesday calls (last 4 weeks, oldest → newest) · productivity from Hubstaff. Red anywhere = act today.</p>
+    <table id="dashTable"></table>
+    <p class="printonly">Escalation rule: any Red/Concerning, or Yellow/Stretched two weeks running → escalated to management the same day. EWS — Early Warning System · Weekly Performance Report.</p>
+  </div>
+  <div class="card" id="escalCard"></div>
+
+  <div class="card" id="ciDetailPrint" style="margin-top:16px;">
+    <h2 style="font-family:Georgia,serif; font-size:16px; margin-bottom:4px;">Check-in details — individual notes</h2>
+    <p class="hint" style="margin-bottom:14px;">Weekly call notes per team member. Generated from Tuesday check-ins.</p>
+    <div id="ciDetailBody"></div>
+  </div>
+</section>
+
+<!-- ============ CHECK-IN ============ -->
+<section id="tab-checkin" hidden>
+  <div class="weekbar">
+    <label style="margin:0;font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px;">Discussing work week</label>
+    <select id="ciWeekSelect" style="font-weight:700;font-size:13px;min-width:220px;"></select>
+    <span class="hint" id="ciProgress" style="margin:0;font-style:italic;"></span>
+  </div>
+  <div class="card">
+    <h2>Who are you on the call with?</h2>
+    <div class="emp-list" id="ciEmps"></div>
+    <div id="ciForm"></div>
+  </div>
+</section>
+
+<!-- ============ HISTORY ============ -->
+<section id="tab-history" hidden>
+  <div class="card">
+    <h2 style="font-family:Georgia,serif;font-size:17px;margin-bottom:4px;">Previous week check-ins</h2>
+    <p class="hint">Browse any week's check-in notes and agreed actions. Select a week to view all team members.</p>
+    <div class="weekbar" style="margin-bottom:16px;">
+      <label style="margin:0;font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.4px;">Select week</label>
+      <select id="histWeek" style="font-weight:700;font-size:13px;min-width:220px;"></select>
+    </div>
+    <div id="histBody"></div>
+  </div>
+</section>
+
+<section id="tab-team" hidden>
+  <div class="card">
+    <h2>Team roster</h2>
+    <p class="hint">People without a team lead that you check in with every Tuesday. Expected hours feed the "hours vs expected" column. Untick "On dashboard" to keep someone in the roster (so Hubstaff imports stay clean) without showing them on the dashboard or check-in list.</p>
+    <table id="rosterTable"></table>
+    <div class="row" style="margin-top:12px; align-items:flex-end;">
+      <div><label>Name</label><input id="nName" placeholder="Full name"></div>
+      <div><label>Role / function</label><input id="nRole" placeholder="e.g. Fund Accountant"></div>
+      <div><label>Client / account</label><input id="nClient" placeholder="e.g. Klyvora"></div>
+      <div style="max-width:120px;"><label>Expected hrs/wk</label><input id="nHrs" type="number" value="40"></div>
+      <div style="max-width:130px;"><button class="btn" id="btnAddEmp">Add person</button></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Activity % thresholds</h2>
+    <p class="hint">What counts green / amber / red on the dashboard. Tune these to your team's mix of roles (recruiters on calls naturally score lower than accountants).</p>
+    <div class="row" style="max-width:680px;">
+      <div><label>Green at or above (%)</label><input id="thGreen" type="number" value="40"></div>
+      <div><label>Amber at or above (%)</label><input id="thAmber" type="number" value="20"></div>
+      <div style="min-width:220px;"><label>Core project names (comma separated)</label><input id="coreProj" placeholder="e.g. Klyvora's Project, AM Group"></div>
+      <div style="max-width:170px;"><label>Daily activity benchmark (%)</label><input id="thDayAct" type="number" value="30"></div>
+      <div style="max-width:120px; align-self:flex-end;"><button class="btn small" id="btnSaveTh">Save</button></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Data</h2>
+    <p class="hint">Everything is saved automatically in this tool and persists between sessions (visible only to you).</p>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+      <button class="btn ghost small" id="btnExport">Download backup (JSON)</button>
+      <button class="btn ghost small" id="btnImport">Restore from backup</button>
+      <input type="file" id="importInput" accept=".json" style="display:none">
+      <button class="btn danger small" id="btnReset">Erase all data</button>
+    </div>
+  </div>
+</section>
+
+</main>
+<div class="toast" id="toast"></div>
+<script>/* ── DATA ── */
+const MISSING_REPORTS_W3={"Harisha MV": ["Mon 15 Jun", "Tue 16 Jun", "Wed 17 Jun"], "Samarth Mittal": ["Mon 15 Jun", "Tue 16 Jun"], "Ankita Gite": ["Wed 17 Jun"], "Anupriya Singh": ["Tue 16 Jun"], "Vaishali Narang": ["Mon 15 Jun"]};
+const CHECKINS_W3={"2026-06-15|Amanpreet Kaur": {"completed": "15 Jun: SOP reviews; training walkthrough; client call. 16 Jun: SOP review; walkthrough; client calls; live tasks initiated; resolving CS team queries. 17 Jun: Client calls; live tasks; resolving CS queries. 18 Jun: SOP review; training walkthrough. 19 Jun: SOP review; training walkthrough.", "prevActionsNote": "Last week's agreed action: Prepare checklist and deliverable workflow"}, "2026-06-15|Ankita Gite": {"completed": "15 Jun: Getting FEINs and local tax registration for all 4 entities; payroll setup. 16 Jun: Prepared email drafts for all 4 entities for payroll rollout. 17 Jun: (No report received.) Thu 18 & Fri 19: Approved leave.", "prevActionsNote": "Last week's agreed action: Ankita on leave 18 and 19 Jun \u2014 cover to be arranged"}, "2026-06-15|Anupriya Singh": {"completed": "15 Jun: Anker bank recs; Conservice funding and invoice process; bank activities. 17 Jun: Anker bank recs; distribution entry; bank activities; Bain entries. 18 Jun: NHR daily tasks; bank recs. 19 Jun: NHR daily tasks; Anker activities. (No report Tue 16.)", "prevActionsNote": "Last week's agreed action: Maintain good communication and be vocal"}, "2026-06-15|Harisha MV": {"completed": "18 Jun: H&A accounts daily tasks. 19 Jun: H&A accounts daily tasks. (Reports for Mon 15, Tue 16, Wed 17 not received \u2014 follow up on call.)", "prevActionsNote": "Last week's open action: [OPEN] Prepare checklist and deliverable task list \u2014 was this completed?"}, "2026-06-15|Samarth Mittal": {"completed": "17 Jun: AP invoices posted; AR batch posted; statements sent to 340MK tenants; PSEG/JCPL/SCMUA ledgers exported. 18 Jun: AP 6 invoices processed; 575 tax invoices created; ledgers exported. 19 Jun: AP 6 processed; ledgers exported. (Reports for Mon 15, Tue 16 not received.)", "prevActionsNote": "Last week's agreed action: Udemy access for QBO training \u2014 was this given by Swati?"}, "2026-06-15|Vaishali Narang": {"completed": "16 Jun: Bank recs for Metalmaster Way LLC till January; rent roll updated. 17 Jun: Revised Zelie financials March 2026; worked on 4800 Metalmaster Way. 18 Jun: Rent rolls updated \u2014 Zelie; new rent invoices sent to tenants; bank recs. 19 Jun: Rent rolls updated \u2014 Zelie. (No report Mon 15.)", "prevActionsNote": "Last week's agreed action: Chase AppFolio team for access fix; maintain daily check-in with client"}, "2026-06-15|Isha Mittal": {"completed": "15\u201319 Jun: Consistent daily delivery \u2014 Conservice payment approvals; positive pay; invoice approvals; bank activity; balance sheet recs; packets; prelims; check run.", "prevActionsNote": "Last week: No actions \u2014 all deliverables were completed on time"}, "2026-06-15|Shubham Gupta": {"completed": "15 Jun: Balance sheet recs; credit card reconciliation. 16 Jun: Bank recs; credit card transactions. 17 Jun: Payroll recs; credit card transactions. 18 Jun: AP 6 invoices; 575 tax invoices created. 19 Jun: AP 6 processed; ledgers exported.", "prevActionsNote": "Last week's agreed action: Prepare automation tool for bank recon and management fee calculations"}};
+const HUB_W3={"2026-06-15": {"Amanpreet Kaur": {"h": 44.9, "a": 42.5, "idle": 2.3, "man": 0, "days": 5, "low": [], "lowAct": ["2026-06-19"], "dayIdle": {}, "p": {"Cross Street": 44.9}}, "Ankita Gite": {"h": 25.5, "a": 16.6, "idle": 4.9, "man": 0, "days": 3, "low": [], "lowAct": ["2026-06-15", "2026-06-16", "2026-06-17"], "dayIdle": {}, "p": {"Cross Street": 25.5}}, "Anupriya Singh": {"h": 46.8, "a": 69.5, "idle": 0.4, "man": 0, "days": 5, "low": [], "lowAct": [], "dayIdle": {}, "p": {"NHR": 46.8}}, "Harisha MV": {"h": 42.8, "a": 30.3, "idle": 0, "man": 0, "days": 5, "low": [], "lowAct": ["2026-06-15", "2026-06-16"], "dayIdle": {}, "p": {"Magnolia": 42.8}}, "Samarth Mittal": {"h": 39.6, "a": 49.1, "idle": 0, "man": 0, "days": 5, "low": ["2026-06-19"], "lowAct": [], "dayIdle": {"2026-06-19": 0}, "p": {"First Mile Capital": 39.6}}, "Tejas Mehta": {"h": 66.1, "a": 15.0, "idle": 1.9, "man": 0, "days": 5, "low": [], "lowAct": ["2026-06-18"], "dayIdle": {}, "p": {"Klyvora": 66.1}}}};
+const CHECKINS_808 = {"2026-06-08|Amanpreet Kaur":{deliv:"On Track",blocker:"No",client:"Green",morale:"Good",win:"Training recording completed",qotw:"Business development opportunity: Ali (Cross Street reviewer) asked about other team members — Philippines third-party team may be replaced, potential to expand our team under Amanpreet.",priorities:"Working on checklist — on track for all tasks",actions:"Prepare checklist and deliverable workflow",escalate:"No",completed:"8-12 Jun: SOP reviews; training walkthrough recordings; client calls; system familiarisation."},"2026-06-08|Ankita Gite":{deliv:"On Track",blocker:"Yes",blockType:"Technical",blockDetail:"Tax notices received — client needs person who handled this earlier",support:"Need experienced person from client side",client:"Green",morale:"Good",win:"Nothing specific",priorities:"Bi-weekly payroll run for all 4 entities — every alternate Friday",actions:"Ankita on leave 18 and 19 Jun — cover to be arranged",escalate:"No"},"2026-06-08|Anupriya Singh":{prevReview:"Done",deliv:"On Track",blocker:"No",client:"Green",morale:"Good",win:"Strand reporting delivered ahead of schedule",priorities:"Anker financials",actions:"Maintain good communication and be vocal",escalate:"No",completed:"8 Jun: Abode/Strand/Spectrum invoices; Anker bank rec. 9 Jun: Trio payable recon; Anker funding; Magpri entries; Strand reporting sent. 10 Jun: Zelie refinance amendments. 11 Jun: Abode comments; Positive pay. 12 Jun: Spectrum reporting; STYL invoices; Nest wire transfer."},"2026-06-08|Harisha MV":{deliv:"On Track",blocker:"No",client:"Green",morale:"Good",win:"All good for now",priorities:"Prepare checklist and deliverable task list",actions:"[OPEN] Prepare checklist and deliverable task list — review next Tuesday",escalate:"No"},"2026-06-08|Samarth Mittal":{deliv:"On Track",blocker:"No",client:"Green",morale:"Good",win:"All good for now",qotw:"Client asked whether agency provides BO training — Udemy access to be provided",priorities:"Nothing on priority",actions:"Udemy access for QBO training — Swati to action",escalate:"No"},"2026-06-08|Vaishali Narang":{deliv:"On Track",blocker:"Yes",blockType:"Technical",blockDetail:"Resident invoice generation in AppFolio blocked — not blocking financials but blocking one major task.",support:"AppFolio team to provide the solution",client:"Green",morale:"Good",win:"Good communications",priorities:"Financials for period closing",actions:"Chase AppFolio team for access fix this week; maintain daily check-in with client",escalate:"No",completed:"8 Jun: Appfolio vs Yardi updates — Zelie Industrial. 9-12 Jun: July 2026 invoices issued; rent roll updated; Zelie financials revised."},"2026-06-08|Isha Mittal":{deliv:"On Track",blocker:"No",client:"Green",morale:"Good",win:"All financial reports delivered on time",priorities:"Next deliverable cycle starts 26th",actions:"No actions — all deliverables completed",escalate:"No",completed:"Conservice payment approvals; positive pay; invoice approvals; bank recs; packets; prelims; check run."},"2026-06-08|Shubham Gupta":{deliv:"On Track",blocker:"No",client:"Green",morale:"Good",win:"No as usual",priorities:"Will provide checklist and task list with frequency",actions:"Prepare automation tool for bank recon and management fee calculations",escalate:"No",completed:"11 Jun: Balance sheet recs; management fees analysis. (Other days on previous email — redirecting.)"}};
+
+const ROSTER_DATA = [
+  {name:"Amanpreet Kaur",role:"Senior Corp Accountant",client:"Cross Street",hrs:40,hidden:false,noHub:false,onBench:false},
+  {name:"Amithi Basnotra",role:"Talent Acquisition",client:"Xshore",hrs:40,hidden:true,noHub:false,onBench:false},
+  {name:"Ankita Gite",role:"",client:"Cross Street",hrs:40,hidden:false,noHub:false,onBench:false},
+  {name:"Anupriya Singh",role:"Property Accountant",client:"NHR",hrs:40,hidden:false,noHub:false,onBench:false},
+  {name:"Harisha MV",role:"Property Accountant",client:"Magnolia",hrs:40,hidden:false,noHub:false,onBench:false},
+  {name:"Karan Arora",role:"",client:"Klyvora",hrs:40,hidden:true,noHub:false,onBench:false},
+  {name:"Samarth Mittal",role:"",client:"First Mile Capital",hrs:40,hidden:false,noHub:false,onBench:false},
+  {name:"Sanya Gupta",role:"Talent Acquisition",client:"Xshore",hrs:40,hidden:true,noHub:false,onBench:false},
+  {name:"Shashwat Pant",role:"",client:"Klyvora",hrs:40,hidden:true,noHub:false,onBench:false},
+  {name:"Tejas Mehta",role:"Property Accountant",client:"Northpond",hrs:40,hidden:false,noHub:false,onBench:false},
+  {name:"Vaishali Narang",role:"Accounts",client:"AM Group",hrs:40,hidden:false,noHub:false,onBench:false},
+  {name:"Isha Mittal",role:"Accounts",client:"29th SC",hrs:40,hidden:false,noHub:true,onBench:false},
+  {name:"Shubham Gupta",role:"Accounts",client:"29th SC",hrs:40,hidden:false,noHub:true,onBench:false}
+];
+
+const HUB_808 = {"Amanpreet Kaur":{h:39.3,a:38.3,idle:1.7,man:0,days:5,low:["2026-06-12"],lowAct:[],dayIdle:{"2026-06-12":1.7},p:{"Cross Street":39.3}},"Ankita Gite":{h:39.4,a:35.0,idle:2.7,man:0,days:5,low:["2026-06-12"],lowAct:["2026-06-08","2026-06-11","2026-06-12"],dayIdle:{},p:{"Cross Street":39.4}},"Anupriya Singh":{h:43.7,a:63.0,idle:0,man:0,days:5,low:["2026-06-12"],lowAct:[],dayIdle:{},p:{"NHR":43.7}},"Harisha MV":{h:37.7,a:25.1,idle:0,man:0,days:5,low:["2026-06-12"],lowAct:["2026-06-08","2026-06-09","2026-06-10","2026-06-11"],dayIdle:{},p:{"Magnolia":37.7}},"Samarth Mittal":{h:37.8,a:35.0,idle:0,man:0,days:5,low:["2026-06-11","2026-06-12"],lowAct:["2026-06-11"],dayIdle:{},p:{"First Mile Capital":37.8}},"Tejas Mehta":{h:46.8,a:null,idle:0,man:0,days:4,low:[],lowAct:[],dayIdle:{},p:{"Klyvora":46.8}},"Vaishali Narang":{h:41.7,a:37.2,idle:0,man:0,days:5,low:["2026-06-12"],lowAct:["2026-06-08"],dayIdle:{},p:{"AM Group":41.7}}};
+
+const DEFAULT_THRESH = {green:40,amber:20,dayAct:30};
+const QOTW_POOL=["If you could fix or improve one process this week, what would it be?","What's one thing your client said or did recently that we should know about?","Who on the team helped you recently and deserves a shout-out?","What's one skill you'd like to build this quarter?","What's taking more of your time than it should?","Any idea for a tool or automation that would make your work easier?","What's one thing we should start or stop doing as a company?","What part of your work do you enjoy the most right now?"];
+const QUESTIONS=[{id:"deliv",ask:"Walk me through this week's deliverables — are we on track?",type:"seg",opts:[["On Track","green"],["At Risk","amber"],["Delayed","red"]]},{id:"reason",ask:"What's causing the delay?",type:"text",ph:"Reason",showIf:s=>s.deliv==="At Risk"||s.deliv==="Delayed"},{id:"blocker",ask:"Any blockers right now — client-side, technical, or process?",type:"seg",opts:[["No","green"],["Yes","red"]]},{id:"blockType",ask:"Which kind?",type:"select",opts:["Client-side","Technical","Internal process","Other"],showIf:s=>s.blocker==="Yes"},{id:"blockDetail",ask:"Tell me what's happening.",type:"text",ph:"Blocker detail",showIf:s=>s.blocker==="Yes"},{id:"support",ask:"What do you need from me to unblock this?",type:"text",ph:"Support needed",showIf:s=>s.blocker==="Yes"},{id:"client",ask:"How is the client feeling — any friction, slow replies, scope confusion?",type:"seg",opts:[["Green","green"],["Yellow","amber"],["Red","red"]]},{id:"morale",ask:"And how are YOU doing — is the workload manageable?",type:"seg",opts:[["Good","green"],["Stretched","amber"],["Concerning","red"]]},{id:"win",ask:"What went well this week — anything you're proud of?",type:"text",ph:"Win of the week"},{id:"qotw",ask:"",type:"text",ph:"Question of the week"},{id:"priorities",ask:"What are your top 2-3 priorities for next week?",type:"text",ph:"Next week priorities"},{id:"actions",ask:"Let's agree the actions for this week.",type:"text",ph:"Action items (with owner)"},{id:"escalate",ask:"Anything that should be escalated to management?",type:"seg",opts:[["No","green"],["Yes","red"]]}];
+const HEALTH_CLS={Green:"c-green",Yellow:"c-amber",Red:"c-red","On Track":"c-green","At Risk":"c-amber",Delayed:"c-red",Good:"c-green",Stretched:"c-amber",Concerning:"c-red"};
+
+/* ── STATE ── */
+let S={roster:[],checkins:{},hubstaff:{},thresholds:{...DEFAULT_THRESH},coreProjects:""};
+let saveTimer=null, currentEmp=null;
+
+/* ── STORAGE: pure localStorage, key ews2 ── */
+function persist(){
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{
+    try{localStorage.setItem('ews2',JSON.stringify(S));}catch(e){}
+  },400);
+}
+
+function loadState(){
+  ['team-pulse-data','ews-v1','team-pulse-data-backup'].forEach(k=>{try{localStorage.removeItem(k);}catch(e){}});
+  let saved=null;
+  try{const d=localStorage.getItem('ews2'); if(d) saved=JSON.parse(d);}catch(e){}
+  if(saved && saved.roster && saved.roster.length){
+    S=saved;
+    if(!S.thresholds) S.thresholds={...DEFAULT_THRESH};
+    if(S.thresholds.dayAct===undefined) S.thresholds.dayAct=30;
+  } else {
+    S={
+      roster:JSON.parse(JSON.stringify(ROSTER_DATA)),
+      checkins:{},hubstaff:{"2026-06-08":Object.assign({},HUB_808),"2026-06-15":Object.assign({},HUB_W3["2026-06-15"])},
+      thresholds:{...DEFAULT_THRESH},coreProjects:""
+    };
+  }
+  if(!S.hubstaff["2026-06-15"]) S.hubstaff["2026-06-15"]=HUB_W3["2026-06-15"];
+  Object.entries(CHECKINS_W3).forEach(([k,v])=>{
+    if(!S.checkins[k]) S.checkins[k]={};
+    if(!S.checkins[k].completed) S.checkins[k].completed=v.completed||'';
+    if(!S.checkins[k].prevActionsNote) S.checkins[k].prevActionsNote=v.prevActionsNote||'';
+  });
+  Object.entries(CHECKINS_808).forEach(([k,v])=>{
+    if(!S.checkins[k]||!S.checkins[k].deliv) S.checkins[k]=Object.assign({},v,S.checkins[k]||{});
+  });
+  if(!S.hubstaff["2026-06-08"]) S.hubstaff["2026-06-08"]={...HUB_808};
+  const fixes={"Ankita Gite":"Cross Street","Samarth Mittal":"First Mile Capital","Amanpreet Kaur":"Cross Street","Anupriya Singh":"NHR","Vaishali Narang":"AM Group","Isha Mittal":"29th SC","Shubham Gupta":"29th SC"};
+  S.roster=S.roster.filter(e=>e.name!=="Shaily Gautam");
+  S.roster.forEach(e=>{if(fixes[e.name])e.client=fixes[e.name];});
+  persist();
+  renderAll();
+}
+
+/* ── HELPERS ── */
+function vis(){return S.roster.filter(e=>!e.hidden);}
+function mondayOf(d){const x=new Date(d);const day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);return x;}
+function iso(d){return d.toISOString().slice(0,10);}
+function weekLabel(wk){const a=new Date(wk+'T00:00:00'),b=new Date(a);b.setDate(b.getDate()+4);const f=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});return `Mon ${f(a)} – Fri ${f(b)} ${b.getFullYear()}`;}
+function fmtD(d){return new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short'});}
+function ckey(wk,name){return wk+'|'+name;}
+function esc(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function qotwFor(wk){const n=Math.floor(new Date(wk+'T00:00:00').getTime()/(7*864e5));return QOTW_POOL[n%QOTW_POOL.length];}
+function prevMonday(){const t=new Date();const m=mondayOf(t);m.setDate(m.getDate()-7);return iso(m);}
+function chip(val){const c=HEALTH_CLS[val];return c?`<span class="chip ${c}">${esc(val)}</span>`:`<span class="chip c-none">—</span>`;}
+function actChip(a,t){if(a===null||a===undefined||isNaN(a))return'<span class="chip c-none">n/a</span>';const cls=a>=t.green?'c-green':(a>=t.amber?'c-amber':'c-red');return`<span class="chip ${cls}">${Math.round(a)}%</span>`;}
+function hveChip(pct){if(pct===null||isNaN(pct))return'<span class="chip c-none">—</span>';const cls=pct>=95?'c-green':(pct>=80?'c-amber':'c-red');return`<span class="chip ${cls}">${Math.round(pct)}%</span>`;}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+function renderAll(){
+  renderDash();
+  renderCheckin();
+  renderHistory();
+  renderTeam();
+}
+
+/* ── TABS ── */
+document.querySelectorAll('nav button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('main section').forEach(s=>s.hidden=true);
+    document.getElementById('tab-'+b.dataset.tab).hidden=false;
+  });
+});
+
+/* ── DASHBOARD ── */
+function buildFlags(emp,wk,wks,hub){
+  const flags=[];const cur=S.checkins[ckey(wk,emp.name)];const prev=S.checkins[ckey(wks[2],emp.name)];
+  if(emp.onBench){flags.push('On bench this week — Hubstaff not applicable');return flags;}
+  if(cur&&cur.deliv){
+    if(cur.escalate==='Yes')flags.push('Escalated: '+(cur.blockDetail||cur.actions||'see notes'));
+    if(cur.client==='Red')flags.push('Client health RED');
+    else if(cur.client==='Yellow'&&prev&&prev.client==='Yellow')flags.push('Client Yellow 2 weeks running');
+    if(cur.morale==='Concerning')flags.push('Morale concerning — needs follow-up');
+    else if(cur.morale==='Stretched'&&prev&&prev.morale==='Stretched')flags.push('Stretched 2 weeks running — workload review');
+    if(cur.deliv==='Delayed')flags.push('Deliverables delayed'+(cur.reason?' — '+cur.reason:''));
+    if(cur.prevReview==='Not done')flags.push("Last week's agreed actions not completed");
+    if(cur.blocker==='Yes')flags.push((cur.blockType||'')+(cur.blockDetail?' blocker: '+cur.blockDetail:''));
+  }else{flags.push('Check-in pending this week');}
+  if(wk==='2026-06-15'){
+    const missing=MISSING_REPORTS_W3[emp.name];
+    if(missing&&missing.length){
+      flags.push('Daily work report not received on: '+missing.join(', '));
+    }
+  }
+  const h=hub[emp.name];
+  if(!emp.noHub){
+    if(h){
+      const t=S.thresholds;
+      if(h.a===null&&h.h>0)flags.push(h.h+'h tracked with NO activity data — verify setup');
+      else if(h.a!==null&&h.a<t.amber)flags.push('Low activity '+Math.round(h.a)+'%');
+      if(h.man&&h.h>0&&h.man/h.h>0.15)flags.push(Math.round(h.man/h.h*100)+'% manual time');
+      if(h.low&&h.low.length){
+        flags.push('Under 8h on '+h.low.length+' day(s): '+h.low.map(fmtD).join(', '));
+        if(h.dayIdle){const ids=h.low.filter(d=>h.dayIdle[d]>0).map(d=>fmtD(d)+': '+h.dayIdle[d]+'h idle');if(ids.length)flags.push('Idle on short day(s) — '+ids.join(', '));}
+      }
+      if(h.lowAct&&h.lowAct.length)flags.push('Activity below '+(t.dayAct||30)+'% on '+h.lowAct.length+' day(s): '+h.lowAct.map(fmtD).join(', '));
+      if(emp.hrs&&h.h/emp.hrs>1.25)flags.push(h.h+'h vs '+emp.hrs+'h expected — sustained long hours');
+    }else{flags.push('No Hubstaff data this week');}
+  }
+  return flags;
+}
+
+function renderCIDetail(wk,visible,checkins){
+  const body=document.getElementById('ciDetailBody');if(!body)return;
+  body.innerHTML=visible.map(emp=>{
+    const c=checkins[ckey(wk,emp.name)];
+    if(!c||!c.deliv)return`<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #eee;"><strong>${esc(emp.name)}</strong> <span class="tag">${esc(emp.client)}</span> <span style="color:#8794A5;font-size:12px;">— check-in not completed</span></div>`;
+    const row=(l,v)=>v?`<tr><td style="padding:3px 8px 3px 0;font-size:11px;font-weight:700;color:#8794A5;white-space:nowrap;vertical-align:top;">${esc(l)}</td><td style="padding:3px 0;font-size:12.5px;">${esc(v)}</td></tr>`:'';
+    return`<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:0.5px solid #E3E8EF;">
+      <div style="margin-bottom:8px;"><strong>${esc(emp.name)}</strong> <span class="tag">${esc(emp.client)}</span>
+      ${chip(c.deliv)} ${chip(c.client)} ${chip(c.morale)} ${c.escalate==='Yes'?'<span class="chip c-red">ESCALATE</span>':''}</div>
+      <table style="width:100%;border-collapse:collapse;">
+        ${row('Daily reports',c.completed)}${row('Blocker',c.blocker==='Yes'?(c.blockType||'')+(c.blockDetail?' — '+c.blockDetail:''):'')}
+        ${row('Support needed',c.support)}${row('Win of week',c.win)}${row('QOTW',c.qotw)}
+        ${row('Next priorities',c.priorities)}${row('Agreed actions',c.actions)}
+        ${row('Hours note',c.hoursNote)}${row('Activity note',c.activityNote)}
+        ${row('Last week actions',c.prevReview?'Status: '+c.prevReview:'')}
+      </table></div>`;
+  }).join('');
+}
+
+function renderHistory(){
+  const wkEl=document.getElementById('histWeek');
+  if(!wkEl) return;
+  const avail=[...new Set(Object.keys(S.checkins).map(k=>k.split('|')[0]))].sort().reverse();
+  if(!avail.length){document.getElementById('histBody').innerHTML='<p class="empty">No check-in history yet.</p>';return;}
+  const cur=wkEl.value||avail[0];
+  wkEl.innerHTML=avail.map(w=>`<option value="${w}"${w===cur?' selected':''}>${weekLabel(w)}</option>`).join('');
+  const wk=wkEl.value;
+  const visible=vis();
+  const rows=visible.map(emp=>{
+    const c=S.checkins[ckey(wk,emp.name)];
+    if(!c||!c.deliv) return `<div style="margin-bottom:12px;padding:10px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);display:flex;gap:12px;align-items:center;">
+      <strong style="min-width:160px">${esc(emp.name)}</strong>
+      <span class="tag">${esc(emp.client||'')}</span>
+      <span style="font-size:12px;color:var(--muted)">No check-in recorded for this week</span>
+    </div>`;
+    const row=(l,v)=>v?`<tr><td style="padding:3px 10px 3px 0;font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap;vertical-align:top;text-transform:uppercase;letter-spacing:.3px">${esc(l)}</td><td style="padding:3px 0;font-size:12.5px;line-height:1.6">${esc(v)}</td></tr>`:'';
+    return `<div style="margin-bottom:14px;padding:12px 16px;background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+        <strong style="font-size:13px">${esc(emp.name)}</strong>
+        <span class="tag">${esc(emp.client||'')}</span>
+        ${chip(c.deliv)} ${chip(c.client)} ${chip(c.morale)}
+        ${c.escalate==='Yes'?'<span class="chip c-red">ESCALATE</span>':''}
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        ${row('From daily reports',c.completed)}
+        ${row('Last week action',c.prevActionsNote)}
+        ${c.prevReview?row('Actions completed?',c.prevReview):''}
+        ${row('Blocker',c.blocker==='Yes'?(c.blockType||'')+(c.blockDetail?' — '+c.blockDetail:''):'')}
+        ${row('Win of week',c.win)}
+        ${row('Question of week',c.qotw)}
+        ${row('Next priorities',c.priorities)}
+        ${row('Agreed actions',c.actions)}
+        ${row('Hours note',c.hoursNote)}
+      </table>
+    </div>`;
+  }).join('');
+  document.getElementById('histBody').innerHTML=rows||'<p class="empty">No data for this week.</p>';
+  const hw=document.getElementById('histWeek');if(hw&&!hw._bound){hw.addEventListener('change',renderHistory);hw._bound=true;}
+}
+
+function renderDash(){
+  const wkEl=document.getElementById('dashWeek');
+  const avail=[...new Set([...Object.keys(S.hubstaff),...Object.keys(S.checkins).map(k=>k.split('|')[0])])].sort().reverse();
+  if(!avail.length)avail.push('2026-06-08');
+  const curVal=wkEl.value;
+  wkEl.innerHTML=avail.map(w=>`<option value="${w}"${(w===curVal||(!curVal&&w===avail[0]))?'selected':''}>${weekLabel(w)}</option>`).join('');
+  const wk=wkEl.value||avail[0];
+  const hub=S.hubstaff[wk]||{};
+  const visible=vis();
+  const wks=[3,2,1,0].map(o=>{const d=new Date(wk+'T00:00:00');d.setDate(d.getDate()-o*7);return iso(d);});
+  let reds=0,escal=0,done=0,acts=[];
+  const rows=visible.map(emp=>{
+    const ci=wks.map(w2=>S.checkins[ckey(w2,emp.name)]||null);
+    const cur=ci[3];if(cur&&cur.deliv)done++;
+    if(cur&&(cur.client==='Red'||cur.morale==='Concerning'))reds++;
+    if(cur&&cur.escalate==='Yes')escal++;
+    const h=hub[emp.name];if(h&&h.a!==null&&!isNaN(h.a))acts.push(h.a);
+    const hve=h&&emp.hrs?h.h/emp.hrs*100:null;
+    const hubCells=emp.onBench?`<td colspan="3" style="text-align:center"><span class="chip c-amber">On bench</span></td>`:
+      emp.noHub?`<td colspan="3" style="text-align:center"><span class="chip c-none">Client device</span></td>`:
+      `<td>${h?h.h.toFixed(1):'—'}</td><td>${h?actChip(h.a,S.thresholds):'<span class="chip c-none">—</span>'}</td><td>${hveChip(hve)}</td>`;
+    return`<tr><td><strong>${esc(emp.name)}</strong><br><span class="tag">${esc(emp.client)}</span></td>
+      <td>${ci.map((c,i)=>`<span title="${weekLabel(wks[i])}">${chip(c?c.client:null)}</span>`).join(' ')}</td>
+      <td>${ci.map((c,i)=>`<span title="${weekLabel(wks[i])}">${chip(c?c.morale:null)}</span>`).join(' ')}</td>
+      ${hubCells}<td>${chip(cur?cur.deliv:null)}</td>
+      <td>${cur&&cur.escalate==='Yes'?'<span class="chip c-red">YES</span>':'<span class="chip c-none">No</span>'}</td></tr>`;
+  }).join('');
+  document.getElementById('dashTable').innerHTML=`<thead><tr><th>Person</th><th>Client health (4 wks)</th><th>Morale (4 wks)</th><th>Hub hrs</th><th>Activity</th><th>Hrs vs exp</th><th>Deliverables</th><th>Escalate</th></tr></thead><tbody>${rows}</tbody>`;
+  const avg=acts.length?Math.round(acts.reduce((a,b)=>a+b,0)/acts.length):null;
+  document.getElementById('dashStats').innerHTML=`
+    <div class="stat ${escal?'alert':'ok'}"><div class="v">${escal}</div><div class="l">Escalations</div></div>
+    <div class="stat ${reds?'alert':'ok'}"><div class="v">${reds}</div><div class="l">Red flags</div></div>
+    <div class="stat"><div class="v">${done}/${visible.length}</div><div class="l">Check-ins done</div></div>
+    <div class="stat"><div class="v">${avg===null?'—':avg+'%'}</div><div class="l">Avg activity</div></div>`;
+  document.getElementById('reportPeriod').textContent='Reporting period: '+weekLabel(wk)+' · Presented: '+new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
+  renderCIDetail(wk,visible,S.checkins);
+  const allFlags=visible.map(e=>({name:e.name,client:e.client,flags:buildFlags(e,wk,wks,hub)})).filter(x=>x.flags.length&&!(x.flags.length===1&&x.flags[0]==='Check-in pending this week'));
+  document.getElementById('escalCard').innerHTML=allFlags.length?
+    `<h2>Management summary — week of ${fmtD(wk)}</h2><p class="hint" style="margin-bottom:12px;">Auto-generated from check-ins and Hubstaff data. Each line is an exception needing awareness or action.</p>`+
+    allFlags.map(x=>`<p style="margin:8px 0"><strong>${esc(x.name)}</strong> <span class="tag">${esc(x.client)}</span><br><span style="font-size:12.5px">${x.flags.map(f=>'• '+esc(f)).join('<br>')}</span></p>`).join(''):
+    `<h2>Management summary — week of ${fmtD(wk)}</h2><p class="hint" style="margin:0">No exceptions this week — all team members on track.</p>`;
+}
+document.getElementById('dashWeek').addEventListener('change',renderDash);
+document.getElementById('btnPrint').addEventListener('click',()=>window.print());
+
+/* ── CHECK-IN ── */
+function renderCheckin(){
+  const wkEl=document.getElementById('ciWeekSelect');
+  const avail=[...new Set([...Object.keys(S.hubstaff),...Object.keys(S.checkins).map(k=>k.split('|')[0])])].filter(w=>w).sort().reverse();
+  if(!avail.length) avail.push(prevMonday());
+  const def=avail.includes(prevMonday())?prevMonday():avail[0];
+  const cur=wkEl.value||def;
+  wkEl.innerHTML=avail.map(w=>`<option value="${w}"${w===cur?' selected':''}>${weekLabel(w)}</option>`).join('');
+  if(!wkEl.value) wkEl.value=def;
+  const wk=wkEl.value;
+  if(!wkEl._bound){wkEl.addEventListener('change',()=>{currentEmp=null;renderCheckin();});wkEl._bound=true;}
+  const visible=vis();
+  const done=visible.filter(e=>{const c=S.checkins[ckey(wk,e.name)];return c&&c.deliv;}).length;
+  const prog=document.getElementById('ciProgress');if(prog)prog.textContent=`${done} of ${visible.length} done for this reporting week`;
+  document.getElementById('ciEmps').innerHTML=visible.map(e=>{
+    const cc=S.checkins[ckey(wk,e.name)];const isDone=!!(cc&&cc.deliv);const isCur=currentEmp===e.name;
+    return`<button class="emp-pill ${isDone?'done':''} ${isCur?'current':''}" data-emp="${esc(e.name)}">${isDone?'✓ ':''}${esc(e.name)}</button>`;
+  }).join('')||'<p class="hint">Add people in Team & Settings.</p>';
+  document.querySelectorAll('.emp-pill').forEach(p=>p.addEventListener('click',()=>{currentEmp=p.dataset.emp;renderCheckin();}));
+  renderForm(wk);
+}
+
+function renderForm(wk){
+  const box=document.getElementById('ciForm');
+  if(!currentEmp){box.innerHTML='<p class="empty">Pick the person you\'re talking to — the call script appears here.</p>';return;}
+  const key=ckey(wk,currentEmp);
+  const s=S.checkins[key]||{};
+  const prevD=new Date(wk+'T00:00:00');prevD.setDate(prevD.getDate()-7);
+  const prev=S.checkins[ckey(iso(prevD),currentEmp)];
+  const hubW=(S.hubstaff[wk]||{})[currentEmp];
+  let rev='';
+  rev+=`<div class="qcard" style="border-left-color:var(--accent);background:var(--accent-soft);">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:6px;">From daily work reports</div>
+    <div style="font-size:13px;line-height:1.7;white-space:pre-wrap">${esc(s.completed||'No daily reports received yet for this week.')}</div>
+    <div style="margin-top:8px;font-size:11.5px;color:var(--muted);font-style:italic">Review before the call — no need to ask the team member to repeat it.</div></div>`;
+  if(hubW&&hubW.low&&hubW.low.length){
+    rev+=`<div class="qcard" style="border-left-color:var(--red)"><div class="ask">Hubstaff shows under 8 hours on ${hubW.low.map(fmtD).join(', ')} — what happened?</div>
+    <textarea data-q="hoursNote" placeholder="Leave / approved / client holiday / connectivity issue">${esc(s.hoursNote||'')}</textarea></div>`;
+  }
+  if(hubW&&hubW.lowAct&&hubW.lowAct.length){
+    rev+=`<div class="qcard" style="border-left-color:var(--red)"><div class="ask">Activity was below ${S.thresholds.dayAct||30}% on ${hubW.lowAct.map(fmtD).join(', ')} — was work off-keyboard, or something else?</div>
+    <textarea data-q="activityNote" placeholder="Client calls / meetings / document review / training">${esc(s.activityNote||'')}</textarea></div>`;
+  }
+  if(prev&&prev.actions&&prev.actions.trim()){
+    rev+=`<div class="qcard" style="border-left-color:#B26B00"><div class="ask">Last Tuesday we agreed on these — did they happen?</div>
+    <p style="margin-bottom:10px;font-size:13px"><span class="tag">Agreed actions</span> ${esc(prev.actions)}</p>
+    <div class="seg">${[['Done','green'],['Partial','amber'],['Not done','red']].map(([v,c])=>`<button data-q="prevReview" data-v="${v}" class="${s.prevReview===v?'sel-'+c:''}">${v}</button>`).join('')}</div></div>`;
+  }
+  rev+=QUESTIONS.map(q=>{
+    if(q.showIf&&!q.showIf(s))return'';
+    const ask=q.id==='qotw'?qotwFor(wk):q.ask;if(!ask)return'';
+    let inner='';
+    if(q.type==='seg')inner=`<div class="seg">${q.opts.map(([v,c])=>`<button data-q="${q.id}" data-v="${esc(v)}" class="${s[q.id]===v?'sel-'+c:''}">${esc(v)}</button>`).join('')}</div>`;
+    else if(q.type==='select')inner=`<select data-q="${q.id}"><option value=""></option>${q.opts.map(o=>`<option${s[q.id]===o?' selected':''}>${o}</option>`).join('')}</select>`;
+    else inner=`<textarea data-q="${q.id}" placeholder="${esc(q.ph||'')}">${esc(s[q.id]||'')}</textarea>`;
+    return`<div class="qcard"><div class="ask">${esc(ask)}</div>${inner}</div>`;
+  }).join('');
+  rev+=`<div style="display:flex;gap:10px;margin-top:6px">
+    <button class="btn" id="ciSave">Save & next person</button>
+    <button class="btn ghost" id="ciSaveStay">Save</button></div>`;
+  box.innerHTML=`<h2 style="margin:14px 0 10px">${esc(currentEmp)} <span class="tag">week of ${fmtD(wk)}</span></h2>`+rev;
+  box.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>{const c=S.checkins[key]||{};c[b.dataset.q]=b.dataset.v;S.checkins[key]=c;persist();renderForm(wk);}));
+  box.querySelectorAll('textarea,select').forEach(el=>el.addEventListener('change',()=>{const c=S.checkins[key]||{};c[el.dataset.q]=el.value;S.checkins[key]=c;persist();}));
+  const finish=(adv)=>{const c=S.checkins[key]||{};if(!c.deliv||!c.client||!c.morale){toast('Capture deliverables, client health and morale at minimum');return;}S.checkins[key]=c;persist();toast('Saved — '+currentEmp);if(adv){const next=vis().find(e=>!(S.checkins[ckey(wk,e.name)]?.deliv));currentEmp=next?next.name:null;}renderCheckin();};
+  document.getElementById('ciSave').addEventListener('click',()=>finish(true));
+  document.getElementById('ciSaveStay').addEventListener('click',()=>finish(false));
+}
+
+/* ── HUBSTAFF ── */
+function parseCSV(text){const rows=[];let row=[],cell='',inQ=false;for(let i=0;i<text.length;i++){const ch=text[i];if(inQ){if(ch==='"'&&text[i+1]==='"'){cell+='"';i++;}else if(ch==='"')inQ=false;else cell+=ch;}else{if(ch==='"')inQ=true;else if(ch===','){row.push(cell);cell='';}else if(ch==='\n'||ch==='\r'){if(cell||row.length){row.push(cell);rows.push(row);row=[];cell='';}}else cell+=ch;}}if(cell||row.length){row.push(cell);rows.push(row);}return rows;}
+function hmsH(s){const p=String(s||'0:0:0').split(':');return+(+p[0]+ +p[1]/60+ +p[2]/3600).toFixed(2);}
+function importCSV(text,fname){
+  const rows=parseCSV(text);if(rows.length<2){toast('File empty');return;}
+  const hdr=rows[0].map(h=>h.trim().toLowerCase());const ix=n=>hdr.indexOf(n);
+  const iD=ix('date'),iM=ix('member'),iT=ix('total hours'),iA=ix('activity %'),iI=ix('idle (hr)'),iP=ix('project'),iMn=ix('manual hours');
+  if(iD<0||iM<0||iT<0){toast('Not a Hubstaff CSV');return;}
+  const bwm={};
+  for(let r=1;r<rows.length;r++){
+    const row=rows[r];if(!row[iM])continue;
+    const wk=iso(mondayOf(new Date(row[iD]+'T00:00:00')));const m=row[iM].trim();
+    const h=hmsH(row[iT]);const idle=iI>=0?hmsH(row[iI]):0;const man=iMn>=0?hmsH(row[iMn]):0;
+    const proj=iP>=0?(row[iP]||'').trim():'';
+    const aRaw=iA>=0?String(row[iA]).replace('%','').trim():'-';const a=(aRaw==='-'||aRaw==='')?null:parseFloat(aRaw);
+    const k=wk+'|'+m;const o=bwm[k]||{wk,m,h:0,idle:0,man:0,aw:0,ah:0,p:{},dayH:{},dayA:{},dayIdle:{}};
+    o.h+=h;o.idle+=idle;o.man+=man;o.dayH[row[iD]]=(o.dayH[row[iD]]||0)+h;o.dayIdle[row[iD]]=(o.dayIdle[row[iD]]||0)+idle;
+    if(proj)o.p[proj]=(o.p[proj]||0)+h;
+    if(a!==null&&!isNaN(a)){const dA=o.dayA[row[iD]]||{aw:0,ah:0};dA.aw+=a*h;dA.ah+=h;o.dayA[row[iD]]=dA;}
+    bwm[k]=o;
+  }
+  const newNames=[];
+  Object.values(bwm).forEach(o=>{
+    if(!S.hubstaff[o.wk])S.hubstaff[o.wk]={};
+    const bench=S.thresholds.dayAct||30;
+    const low=Object.entries(o.dayH).filter(([,hh])=>hh<8).map(([d])=>d).sort();
+    const lowAct=Object.entries(o.dayA).filter(([,x])=>x.ah>0&&x.aw/x.ah<bench).map(([d])=>d).sort();
+    const di={};Object.entries(o.dayIdle).forEach(([d,v])=>{if(v>0)di[d]=+v.toFixed(1);});
+    const pr={};Object.entries(o.p).forEach(([k,v])=>pr[k]=+v.toFixed(1));
+    S.hubstaff[o.wk][o.m]={h:+o.h.toFixed(1),a:o.ah>0?+(o.aw/o.ah).toFixed(1):null,idle:+o.idle.toFixed(1),man:+o.man.toFixed(1),days:Object.keys(o.dayH).length,low,lowAct,dayIdle:di,p:pr};
+    if(!S.roster.find(e=>e.name===o.m))newNames.push(o.m);
+  });
+  newNames.forEach(n=>S.roster.push({name:n,role:'',client:'',hrs:40,hidden:false,noHub:false}));
+  persist();renderHubWeeks();renderDash();
+  toast('Imported '+fname+(newNames.length?' — new: '+newNames.join(', '):''));
+}
+const dz=document.getElementById('dropZone'),fi=document.getElementById('fileInput');
+if(dz){dz.addEventListener('click',()=>fi.click());dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});dz.addEventListener('dragleave',()=>dz.classList.remove('over'));dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f)f.text().then(t=>importCSV(t,f.name));});}
+if(fi)fi.addEventListener('change',()=>{const f=fi.files[0];if(f)f.text().then(t=>importCSV(t,f.name));fi.value='';});
+
+function renderHubWeeks(){
+  const el=document.getElementById('hubWeeks');if(!el)return;
+  const wks=Object.keys(S.hubstaff).sort().reverse();
+  el.innerHTML=wks.length?wks.map(w=>{const n=Object.keys(S.hubstaff[w]).length;return`<p style="margin:6px 0"><strong>${weekLabel(w)}</strong> — ${n} people <button class="btn danger small" data-del="${w}" style="margin-left:8px">Delete</button></p>`;}).join(''):'<p class="empty">No weeks imported yet.</p>';
+  document.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{if(confirm('Delete week of '+b.dataset.del+'?')){delete S.hubstaff[b.dataset.del];persist();renderHubWeeks();renderDash();}}));
+}
+
+/* ── TEAM & SETTINGS ── */
+function renderTeam(){
+  const el=document.getElementById('thGreen');if(el){el.value=S.thresholds.green;document.getElementById('thAmber').value=S.thresholds.amber;document.getElementById('thDayAct').value=S.thresholds.dayAct||30;document.getElementById('coreProj').value=S.coreProjects||'';}
+  const tbl=document.getElementById('rosterTable');if(!tbl)return;
+  tbl.innerHTML=`<thead><tr><th>Name</th><th>Role</th><th>Client</th><th>Exp hrs</th><th>Hubstaff</th><th>Dashboard</th><th>Bench</th><th></th></tr></thead><tbody>`+
+    S.roster.map((e,i)=>`<tr style="${e.hidden?'opacity:.55':''}"><td><strong>${esc(e.name)}</strong></td>
+      <td><input data-f="role" data-i="${i}" value="${esc(e.role)}" style="min-width:130px"></td>
+      <td><input data-f="client" data-i="${i}" value="${esc(e.client)}" style="min-width:110px"></td>
+      <td><input data-f="hrs" data-i="${i}" type="number" value="${e.hrs}" style="width:70px"></td>
+      <td style="text-align:center"><input data-hub="${i}" type="checkbox" ${e.noHub?'':'checked'} style="width:16px;height:16px"></td>
+      <td style="text-align:center"><input data-vis="${i}" type="checkbox" ${e.hidden?'':'checked'} style="width:16px;height:16px"></td>
+      <td style="text-align:center"><input data-bench="${i}" type="checkbox" ${e.onBench?'checked':''} style="width:16px;height:16px"></td>
+      <td><button class="btn danger small" data-rm="${i}">Remove</button></td></tr>`).join('')+`</tbody>`;
+  tbl.querySelectorAll('input[data-f]').forEach(el=>el.addEventListener('change',()=>{S.roster[+el.dataset.i][el.dataset.f]=el.dataset.f==='hrs'?+el.value:el.value;persist();}));
+  tbl.querySelectorAll('[data-hub]').forEach(cb=>cb.addEventListener('change',()=>{S.roster[+cb.dataset.hub].noHub=!cb.checked;persist();renderTeam();}));
+  tbl.querySelectorAll('[data-vis]').forEach(cb=>cb.addEventListener('change',()=>{S.roster[+cb.dataset.vis].hidden=!cb.checked;persist();renderTeam();}));
+  tbl.querySelectorAll('[data-bench]').forEach(cb=>cb.addEventListener('change',()=>{S.roster[+cb.dataset.bench].onBench=cb.checked;persist();renderTeam();}));
+  tbl.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',()=>{if(confirm('Remove '+S.roster[+b.dataset.rm].name+'?')){S.roster.splice(+b.dataset.rm,1);persist();renderTeam();}}));
+  const nName=document.getElementById('nName');
+  document.getElementById('btnAddEmp').addEventListener('click',()=>{const n=nName.value.trim();if(!n){toast('Name required');return;}S.roster.push({name:n,role:document.getElementById('nRole').value.trim(),client:document.getElementById('nClient').value.trim(),hrs:+document.getElementById('nHrs').value||40,hidden:false,noHub:false,onBench:false});persist();renderTeam();toast(n+' added');nName.value='';document.getElementById('nRole').value='';document.getElementById('nClient').value='';});
+  document.getElementById('btnSaveTh').addEventListener('click',()=>{S.thresholds={green:+document.getElementById('thGreen').value||40,amber:+document.getElementById('thAmber').value||20,dayAct:+document.getElementById('thDayAct').value||30};S.coreProjects=document.getElementById('coreProj').value;persist();toast('Settings saved');});
+  document.getElementById('btnExport').addEventListener('click',()=>{const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='ews-backup-'+iso(new Date())+'.json';a.click();});
+  document.getElementById('btnImport').addEventListener('click',()=>document.getElementById('importInput').click());
+  document.getElementById('importInput').addEventListener('change',function(){
+    const f=this.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const d=JSON.parse(ev.target.result);
+        if(!d.roster||!d.roster.length){toast('Invalid backup file — roster missing');return;}
+        if(!confirm('This will replace ALL current data with the backup. Continue?'))return;
+        localStorage.setItem('ews2',JSON.stringify(d));
+        toast('Backup restored — reloading...');
+        setTimeout(()=>location.reload(),900);
+      }catch(err){toast('Could not read file: '+err.message);}
+    };
+    r.readAsText(f);
+    this.value='';
+  });
+  document.getElementById('btnReset').addEventListener('click',()=>{if(confirm('Erase ALL data?')){try{localStorage.removeItem('ews2');}catch(e){}loadState();}});
+}
+
+/* ── BOOT ── */
+window.addEventListener('DOMContentLoaded', loadState);
+</script>
+</body>
+</html>
