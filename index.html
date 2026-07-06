@@ -204,7 +204,7 @@ const ROSTER_DATA=[];
 const HUB_808={};
 
 const DEFAULT_THRESH = {green:40,amber:20,dayAct:30};
-const QOTW_POOL=["If you could fix or improve one process this week, what would it be?","What's one thing your client said or did recently that we should know about?","Who on the team helped you recently and deserves a shout-out?","What's one skill you'd like to build this quarter?","What's taking more of your time than it should?","Any idea for a tool or automation that would make your work easier?","What's one thing we should start or stop doing as a company?","What part of your work do you enjoy the most right now?"];
+const QOTW_POOL=["If you could fix or improve one process this week, what would it be?","What's one thing your client said or did recently that we should know about?","Is there any scope for automation in your current client tasks — any repetitive work we could script or tool-ify?","What's one skill you'd like to build this quarter?","What's taking more of your time than it should?","Any idea for a tool or automation that would make your work easier?","What's one thing we should start or stop doing as a company?","What part of your work do you enjoy the most right now?"];
 const QUESTIONS=[{id:"deliv",ask:"Walk me through this week's deliverables — are we on track?",type:"seg",opts:[["On Track","green"],["At Risk","amber"],["Delayed","red"]]},{id:"reason",ask:"What's causing the delay?",type:"text",ph:"Reason",showIf:s=>s.deliv==="At Risk"||s.deliv==="Delayed"},{id:"blocker",ask:"Any blockers right now — client-side, technical, or process?",type:"seg",opts:[["No","green"],["Yes","red"]]},{id:"blockType",ask:"Which kind?",type:"select",opts:["Client-side","Technical","Internal process","Other"],showIf:s=>s.blocker==="Yes"},{id:"blockDetail",ask:"Tell me what's happening.",type:"text",ph:"Blocker detail",showIf:s=>s.blocker==="Yes"},{id:"support",ask:"What do you need from me to unblock this?",type:"text",ph:"Support needed",showIf:s=>s.blocker==="Yes"},{id:"client",ask:"How is the client feeling — any friction, slow replies, scope confusion?",type:"seg",opts:[["Green","green"],["Yellow","amber"],["Red","red"]]},{id:"morale",ask:"And how are YOU doing — is the workload manageable?",type:"seg",opts:[["Good","green"],["Stretched","amber"],["Concerning","red"]]},{id:"win",ask:"What went well this week — anything you're proud of?",type:"text",ph:"Win of the week"},{id:"qotw",ask:"",type:"text",ph:"Question of the week"},{id:"priorities",ask:"What are your top 2-3 priorities for next week?",type:"text",ph:"Next week priorities"},{id:"actions",ask:"Let's agree the actions for this week.",type:"text",ph:"Action items (with owner)"},{id:"escalate",ask:"Anything that should be escalated to management?",type:"seg",opts:[["No","green"],["Yes","red"]]}];
 const HEALTH_CLS={Green:"c-green",Yellow:"c-amber",Red:"c-red","On Track":"c-green","At Risk":"c-amber",Delayed:"c-red",Good:"c-green",Stretched:"c-amber",Concerning:"c-red"};
 
@@ -290,6 +290,14 @@ function buildFlags(emp,wk,wks,hub){
     if(missing&&missing.length){
       flags.push('Daily work report not received on: '+missing.join(', '));
     }
+  }
+  if(wk==='2026-06-29'){
+    const w629flags={
+      'Harisha MV':'No daily work reports received all week — checklist action open 5 weeks',
+      'Anupriya Singh':'Client communication improvement — open action 4 weeks running',
+      'Ankita Gite':'Tax notice blocker still unresolved',
+    };
+    if(w629flags[emp.name]) flags.push(w629flags[emp.name]);
   }
   const h=hub[emp.name];
   if(!emp.noHub){
