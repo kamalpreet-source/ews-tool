@@ -283,6 +283,12 @@ function buildFlags(emp,wk,wks,hub){
     else if(cur.morale==='Stretched'&&prev&&prev.morale==='Stretched')flags.push('Stretched 2 weeks running — workload review');
     if(cur.deliv==='Delayed')flags.push('Deliverables delayed'+(cur.reason?' — '+cur.reason:''));
     if(cur.prevReview==='Not done')flags.push("Last week's agreed actions not completed");
+    // Surface client feedback development areas
+    const fbEntry=wks.map(w2=>S.checkins[ckey(w2,emp.name)]||null).find(c=>c&&c.clientFeedback);
+    if(fbEntry){
+      const devMatch=fbEntry.clientFeedback.match(/Development area: ([^']+)/);
+      if(devMatch) flags.push('Client feedback development area: '+devMatch[1].trim());
+    }
     if(cur.blocker==='Yes')flags.push((cur.blockType||'')+(cur.blockDetail?' blocker: '+cur.blockDetail:''));
   }else{flags.push('Check-in pending this week');}
   if(wk==='2026-06-15'){
@@ -370,6 +376,7 @@ function renderHistory(){
         ${row('Next priorities',c.priorities)}
         ${row('Agreed actions',c.actions)}
         ${row('Hours note',c.hoursNote)}
+        ${c.clientFeedback?row('Client feedback',c.clientFeedback):''}
       </table>
     </div>`;
   }).join('');
@@ -402,9 +409,10 @@ function renderDash(){
       <td>${ci.map((c,i)=>`<span title="${weekLabel(wks[i])}">${chip(c?c.client:null)}</span>`).join(' ')}</td>
       <td>${ci.map((c,i)=>`<span title="${weekLabel(wks[i])}">${chip(c?c.morale:null)}</span>`).join(' ')}</td>
       ${hubCells}<td>${chip(cur?cur.deliv:null)}</td>
+      <td>${(()=>{const fb=wks.map(w2=>S.checkins[ckey(w2,emp.name)]||null).find(c=>c&&c.clientFeedback);return fb?'<span class="chip c-green" title="'+esc(fb.clientFeedback)+'">★ '+fb.clientFeedback.match(/Overall rating: (\d+\/\d+)/)?.[1]+'</span>':'<span class="chip c-none">—</span>';})()}</td>
       <td>${cur&&cur.escalate==='Yes'?'<span class="chip c-red">YES</span>':'<span class="chip c-none">No</span>'}</td></tr>`;
   }).join('');
-  document.getElementById('dashTable').innerHTML=`<thead><tr><th>Person</th><th>Client health (4 wks)</th><th>Morale (4 wks)</th><th>Hub hrs</th><th>Activity</th><th>Hrs vs exp</th><th>Deliverables</th><th>Escalate</th></tr></thead><tbody>${rows}</tbody>`;
+  document.getElementById('dashTable').innerHTML=`<thead><tr><th>Person</th><th>Client health (4 wks)</th><th>Morale (4 wks)</th><th>Hub hrs</th><th>Activity</th><th>Hrs vs exp</th><th>Deliverables</th><th>Client feedback</th><th>Escalate</th></tr></thead><tbody>${rows}</tbody>`;
   const avg=acts.length?Math.round(acts.reduce((a,b)=>a+b,0)/acts.length):null;
   document.getElementById('dashStats').innerHTML=`
     <div class="stat ${escal?'alert':'ok'}"><div class="v">${escal}</div><div class="l">Escalations</div></div>
