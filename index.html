@@ -465,6 +465,15 @@ function renderForm(wk){
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:6px;">From daily work reports</div>
     <div style="font-size:13px;line-height:1.7;white-space:pre-wrap">${esc(s.completed||'No daily reports received yet for this week.')}</div>
     <div style="margin-top:8px;font-size:11.5px;color:var(--muted);font-style:italic">Review before the call — no need to ask the team member to repeat it.</div></div>`;
+  // Client feedback card — show if feedback exists for any week
+  const fbEntry=wks.map(w2=>S.checkins[ckey(w2,currentEmp)]||null).find(c=>c&&c.clientFeedback);
+  if(fbEntry){
+    const isLow=fbEntry.clientFeedback.includes('1/5')||fbEntry.clientFeedback.includes('2/5')||fbEntry.clientFeedback.includes('3/5');
+    rev+=`<div class="qcard" style="border-left-color:${isLow?'var(--red)':'var(--amber)'};background:${isLow?'var(--red-bg)':'var(--amber-bg)'};">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:${isLow?'var(--red)':'var(--amber)'};margin-bottom:6px;">⭐ Client feedback received — discuss on this call</div>
+      <div style="font-size:13px;line-height:1.7;white-space:pre-wrap">${esc(fbEntry.clientFeedback)}</div>
+      <div style="margin-top:8px;font-size:11.5px;font-style:italic;color:${isLow?'var(--red)':'var(--amber)'}">Walk the team member through this feedback and agree on actions.</div></div>`;
+  }
   if(hubW&&hubW.low&&hubW.low.length){
     rev+=`<div class="qcard" style="border-left-color:var(--red)"><div class="ask">Hubstaff shows under 8 hours on ${hubW.low.map(fmtD).join(', ')} — what happened?</div>
     <textarea data-q="hoursNote" placeholder="Leave / approved / client holiday / connectivity issue">${esc(s.hoursNote||'')}</textarea></div>`;
