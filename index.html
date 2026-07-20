@@ -465,8 +465,9 @@ function renderForm(wk){
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);margin-bottom:6px;">From daily work reports</div>
     <div style="font-size:13px;line-height:1.7;white-space:pre-wrap">${esc(s.completed||'No daily reports received yet for this week.')}</div>
     <div style="margin-top:8px;font-size:11.5px;color:var(--muted);font-style:italic">Review before the call — no need to ask the team member to repeat it.</div></div>`;
-  // Client feedback card — show if feedback exists for any week
-  const fbEntry=wks.map(w2=>S.checkins[ckey(w2,currentEmp)]||null).find(c=>c&&c.clientFeedback);
+  // Client feedback card — show if feedback exists for any of the last 8 weeks
+  const fbWks=[0,1,2,3,4,5,6,7].map(o=>{const d=new Date(wk+'T00:00:00');d.setDate(d.getDate()-o*7);return iso(d);});
+  const fbEntry=fbWks.map(w2=>S.checkins[ckey(w2,currentEmp)]||null).find(c=>c&&c.clientFeedback);
   if(fbEntry){
     const isLow=fbEntry.clientFeedback.includes('1/5')||fbEntry.clientFeedback.includes('2/5')||fbEntry.clientFeedback.includes('3/5');
     rev+=`<div class="qcard" style="border-left-color:${isLow?'var(--red)':'var(--amber)'};background:${isLow?'var(--red-bg)':'var(--amber-bg)'};">
